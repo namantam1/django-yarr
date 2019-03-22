@@ -1,125 +1,50 @@
-var YARR = (function () {
-    /** Global YARR object
-        Requires YARR_CONFIG
-    */
-    
-    // Constants, must match server-side values
-    var constants = {
-        ENTRY_UNREAD:   0,
-        ENTRY_READ:     1,
-        ENTRY_SAVED:    2,
-        ORDER_ASC:      'asc',
-        ORDER_DESC:     'desc'
-    };
-    
-    // Get config and apply defaults
-    var config = window.YARR_CONFIG;
-    if (!config) {
-        return;
-    }
-    config = $.extend({}, {
-        con:        'body'
-    }, config);
-    
+import $ from 'jquery';
+import {ENTRY_UNREAD, ENTRY_READ, ENTRY_SAVED} from './utils/constants';
+import multiton from './utils/multiton';
+import Status from './components/status';
+import {hide, show, fadeOut} from './utils/visible';
+
+const config = {
+    con: '.yarr',
+    ...(window.YARR_CONFIG || {})
+};
+
     // Prep globals
-    var Yarr = {
-        constants:      constants,
-        config:         config
+    const Yarr = {
+        status: new Status(),
+        config: config
     };
-    
+
     // Additional initialisation on DOM ready
     $(function () {
+        Yarr.el = {
+            con: document.querySelector(config.con),
+            control: document.querySelector(`${config.con} > .control`),
+            body: document.querySelector(`${config.con} > .body`)
+        };
         Yarr.$con = $(config.con);
+        Yarr.status.con = Yarr.el.body;
     });
-    
-    
-    /** Multiton class factory
-        Turns a class constructor into a Multiton
-        
-        Call with an abstract class constructor
-        Returns the constructor with a new .get() object method
-        To get or create instance of class, call .get() with arguments;
-        must pass at least one argument, which must be the key.
-        All arguments are then passed on to the constructor.
-    */
-    Yarr.multiton = function(cls) {
-        // Somewhere to store instances
-        var registry = {};
 
-        // A wrapper class to pass arbitrary arguments on to the constructor
-        function Cls(args) {
-            return cls.apply(this, args);
-        }
-        
-        cls.get = function (key) {
-            // Copy across prototype in case it has changed
-            Cls.prototype = cls.prototype;
-            
-            // Instantiate if necessary
-            if (!(key in registry)) {
-                registry[key] = new Cls(arguments);
-            }
-            return registry[key];
-        };
-        return cls;
-    };
-    
-    /** Status popup handler */
-    Yarr.Status = (function () {
-        var $status, statusTimeout;
-        
-        return {
-            set: function (msg, is_error) {
-                /** Display a message in the status popup */
-                
-                // Create the status now rather than within constructor
-                // Allows pages to override $con
-                if (!$status) {
-                    $status = $('<div id="yarr_status" />')
-                        .appendTo(Yarr.$con)
-                        .hide()
-                    ;
-                }
-                
-                clearTimeout(statusTimeout);
-                if (!msg) {
-                    $status.hide();
-                    return;
-                }
-                
-                $status.text(msg).show();
-                if (is_error) {
-                    $status.addClass('yarr_error');
-                } else {
-                    $status.removeClass('yarr_error');
-                }
-                
-                statusTimeout = setTimeout(function () {
-                    $status.fadeOut();
-                }, 5000);
-            }
-        };
-    })();
-    
     /** API abstraction layer */
     Yarr.API = (function () {
         var root_url = config.api,
             requestQueue = [],
             requesting = false
         ;
-        
+
         function request(api_call, data, successFn, failFn) {
             if (!root_url) {
                 Yarr.Status.set('API not available', true);
                 return;
             }
-            
+
             if (requesting) {
                 requestQueue.push([api_call, data, successFn, failFn]);
                 return;
             }
             requesting = true;
-            
+
             $.getJSON(root_url + api_call + '/', data)
                 .done(function(json) {
                     Yarr.Status.set(json.msg, !json.success);
@@ -148,7 +73,7 @@ var YARR = (function () {
             }
             request.apply(this, requestQueue.shift());
         }
-        
+
         // Hash for faster lookup
         var dates = {'last_checked': 1, 'last_updated': 1, 'next_check': 1};
         return {
@@ -179,7 +104,7 @@ var YARR = (function () {
                     }, failFn
                 );
             },
-            
+
             getFeedPks: function (feed, state, order, successFn, failFn) {
                 Yarr.API.getFeedsPks([feed.pk], state, order, successFn, failFn);
             },
@@ -197,7 +122,7 @@ var YARR = (function () {
                     }, failFn
                 );
             },
-            
+
             getEntry: function (entry, successFn, failFn) {
                 Yarr.API.getEntries(
                     [entry.pk], constants.ORDER_DESC, successFn, failFn
@@ -229,7 +154,7 @@ var YARR = (function () {
                     }, failFn
                 );
             },
-            
+
             unreadEntry: function (entry, successFn, failFn) {
                 Yarr.API.unreadEntries([entry.pk], successFn, failFn);
             },
@@ -239,23 +164,23 @@ var YARR = (function () {
             saveEntry: function (entry, successFn, failFn) {
                 Yarr.API.saveEntries([entry.pk], successFn, failFn);
             },
-            
+
             unreadEntries: function (entry_pks, successFn, failFn) {
                 Yarr.API.setEntries(
-                    entry_pks, constants.ENTRY_UNREAD, null, successFn, failFn
+                    entry_pks, ENTRY_UNREAD, null, successFn, failFn
                 );
             },
             readEntries: function (entry_pks, successFn, failFn) {
                 Yarr.API.setEntries(
-                    entry_pks, constants.ENTRY_READ, null, successFn, failFn
+                    entry_pks, ENTRY_READ, null, successFn, failFn
                 );
             },
             saveEntries: function (entry_pks, successFn, failFn) {
                 Yarr.API.setEntries(
-                    entry_pks, constants.ENTRY_SAVED, null, successFn, failFn
+                    entry_pks, ENTRY_SAVED, null, successFn, failFn
                 );
             },
-            
+
             setEntries: function (entry_pks, state, if_state, successFn, failFn) {
                 request('entry/set', {
                     'entry_pks': entry_pks.join(','),
@@ -265,10 +190,10 @@ var YARR = (function () {
             }
         };
     })();
-    
-    
+
+
     /** Feed object */
-    Yarr.Feed = Yarr.multiton(function (pk) {
+    Yarr.Feed = multiton(function (pk) {
         this.pk = pk;
         this.loaded = false;
     });
@@ -284,9 +209,9 @@ var YARR = (function () {
             return this.text || this.title || 'untitled';
         }
     });
-    
+
     /** Entry object */
-    Yarr.Entry = Yarr.multiton(function (pk) {
+    Yarr.Entry = multiton(function (pk) {
         this.pk = pk;
         this.loaded = false;
     });
@@ -299,8 +224,8 @@ var YARR = (function () {
             Yarr.API.getEntry(this, successFn, failFn);
         }
     });
-    
-    
+
+
     /** Cookie management */
     Yarr.Cookie = {
         set: function (key, value) {
@@ -323,6 +248,3 @@ var YARR = (function () {
             return defaultValue;
         }
     };
-    
-    return Yarr;
-})();

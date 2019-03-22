@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "./yarr/static/yarr/",
+    "target": "esnext",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "noEmit": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react"
+  },
+  "include": [
+    "./static_src/"
+  ]
+}

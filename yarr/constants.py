@@ -1,8 +1,9 @@
 """
 Yarr constants
+
+Also defined in JavaScript in utils/constants.js
 """
 
-# Entry state - must be also defined in yarr.js
 ENTRY_UNREAD = 0
 ENTRY_READ = 1
 ENTRY_SAVED = 2

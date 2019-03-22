@@ -1,0 +1,36 @@
+{
+  "name": "yarr",
+  "version": "0.5.0",
+  "description": "django-yarr",
+  "main": "index.js",
+  "author": "Richard Terry",
+  "license": "BSD",
+  "repository": "git://github.com/radiac/django-yarr.git",
+  "private": true,
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.2.1",
+    "css-loader": "^2.0.0",
+    "mini-css-extract-plugin": "^0.5.0",
+    "node-sass": "^4.11.0",
+    "sass-loader": "^7.1.0",
+    "source-map-loader": "^0.2.4",
+    "style-loader": "^0.23.1",
+    "typescript": "^3.2.2",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "scripts": {
+    "watch": "webpack-dev-server --mode development",
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "@types/react": "^16.7.13",
+    "@types/react-dom": "^16.0.11",
+    "include-media": "^1.4.9",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "unstated": "^2.1.1"
+  }
+}
